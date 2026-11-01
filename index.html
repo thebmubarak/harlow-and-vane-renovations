@@ -1073,7 +1073,15 @@ if("IntersectionObserver" in window){
       if(e.isIntersecting){e.target.classList.add("show");obs.unobserve(e.target)}
     });
   },{threshold:0,rootMargin:"0px 0px -5% 0px"});
-  document.querySelectorAll(".reveal,.reveal-scale").forEach(x=>revealIO.observe(x));
+  /* Double rAF: on wide desktop viewports most sections already sit in the initial
+     viewport, so observing synchronously makes the browser coalesce the hidden-state
+     paint and the "show" class into a single frame — the fade-up never gets painted,
+     it just snaps straight to visible. Waiting two frames guarantees the hidden state
+     has actually been painted once before we start watching, so the transition plays
+     on every viewport size, not just narrower ones where scrolling buys that gap for free. */
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll(".reveal,.reveal-scale").forEach(x=>revealIO.observe(x));
+  }));
 } else {
   document.querySelectorAll(".reveal,.reveal-scale").forEach(x=>x.classList.add("show"));
 }
